@@ -13,6 +13,7 @@
 //! - `info_log`:    情報ログ
 //! - `warning_log`: 警告ログ
 //! - `error_log`:   エラーログ
+//! - `debug_log`:   デバッグログ
 
 use chrono::Local;
 use std::fs::OpenOptions;
@@ -36,7 +37,8 @@ pub enum Header {
     SUCCESS,
     INFO,
     WARNING,
-    ERROR
+    ERROR,
+    DEBUG,
 }
 
 impl Header {
@@ -46,6 +48,7 @@ impl Header {
             Header::INFO => "INFO",
             Header::WARNING => "WARNING",
             Header::ERROR => "ERROR",
+            Header::DEBUG => "DEBUG",
         }
     }
 }
@@ -108,49 +111,59 @@ impl Logger {
 macro_rules! app_log {
     ($header:expr, $msg:expr, $($arg:tt)*) => {
         let formatted_message = format!($msg, $($arg)*);
-        crate::application::helpers::logger::LOGGER.log($header, &formatted_message);
+        crate::helpers::logger::LOGGER.log($header, &formatted_message);
     };
     ($header:expr, $msg:expr) => {
-        crate::application::helpers::logger::LOGGER.log($header, $msg);
+        crate::helpers::logger::LOGGER.log($header, $msg);
     };
 }
 
 #[macro_export]
 macro_rules! success_log {
     ($msg:expr, $($arg:tt)*) => {
-        app_log!(crate::application::helpers::logger::Header::SUCCESS, $msg, $($arg)*);
+        app_log!(crate::helpers::logger::Header::SUCCESS, $msg, $($arg)*);
     };
     ($msg:expr) => {
-        app_log!(crate::application::helpers::logger::Header::SUCCESS, $msg);
+        app_log!(crate::helpers::logger::Header::SUCCESS, $msg);
     };
 }
 
 #[macro_export]
 macro_rules! info_log {
     ($msg:expr, $($arg:tt)*) => {
-        app_log!(crate::application::helpers::logger::Header::INFO, $msg, $($arg)*);
+        app_log!(crate::helpers::logger::Header::INFO, $msg, $($arg)*);
     };
     ($msg:expr) => {
-        app_log!(crate::application::helpers::logger::Header::INFO, $msg);
+        app_log!(crate::helpers::logger::Header::INFO, $msg);
     };
 }
 
 #[macro_export]
 macro_rules! warning_log {
     ($msg:expr, $($arg:tt)*) => {
-        app_log!(crate::application::helpers::logger::Header::WARNING, $msg, $($arg)*);
+        app_log!(crate::helpers::logger::Header::WARNING, $msg, $($arg)*);
     };
     ($msg:expr) => {
-        app_log!(crate::application::helpers::logger::Header::WARNING, $msg);
+        app_log!(crate::helpers::logger::Header::WARNING, $msg);
     };
 }
 
 #[macro_export]
 macro_rules! error_log {
     ($msg:expr, $($arg:tt)*) => {
-        app_log!(crate::application::helpers::logger::Header::ERROR, $msg, $($arg)*);
+        app_log!(crate::helpers::logger::Header::ERROR, $msg, $($arg)*);
     };
     ($msg:expr) => {
-        app_log!(crate::application::helpers::logger::Header::ERROR, $msg);
+        app_log!(crate::helpers::logger::Header::ERROR, $msg);
+    };
+}
+
+#[macro_export]
+macro_rules! debug_log {
+    ($msg:expr, $($arg:tt)*) => {
+        app_log!(crate::helpers::logger::Header::DEBUG, $msg, $($arg)*);
+    };
+    ($msg:expr) => {
+        app_log!(crate::helpers::logger::Header::DEBUG, $msg);
     };
 }
