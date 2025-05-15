@@ -2,7 +2,7 @@ use actix::prelude::*;
 use std::collections::HashMap;
 
 use crate::{app_log, info_log, warning_log};
-use crate::message::{Connect, SendMessage, ServerMessage};
+use crate::message::{Connect, Disconnect, SendMessage, ServerMessage};
 
 /// ゲームサーバーアクター - 全セッションとゲーム状態を管理
 pub struct GameServer {
@@ -97,5 +97,28 @@ impl Handler<Connect> for GameServer {
             message: format!("User {} has logged in", msg.username),
         };
         self.broadcast_message(&notification, Some(&msg.session_id));
+    }
+}
+
+/// 切断メッセージのハンドラー
+impl Handler<Disconnect> for GameServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Disconnect, _: &mut Self::Context) -> Self::Result {
+        if let Some((username, _)) = self.sessions.remove(&msg.session_id) {
+            self.users.remove(&username);
+            info_log!(
+                "User disconnected: {} (Session ID: {}), total connections: {}",
+                username,
+                msg.session_id,
+                self.sessions.len(),
+            );
+
+            // 全ユーザーにユーザーのログアウトを通知
+            let notification = ServerMessage::Success {
+                message: format!("User {} has logged out", username),
+            };
+            self.broadcast_message(&notification, None);
+        }
     }
 }
