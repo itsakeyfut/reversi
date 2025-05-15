@@ -1,4 +1,7 @@
+use actix::prelude::*;
 use serde::{Deserialize, Serialize};
+
+use crate::session::WsGameSession;
 
 /// クライアントからのメッセージを表す列挙型
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,21 +38,15 @@ pub enum ClientMessage {
 pub enum ServerMessage {
     /// 成功メッセージ
     #[serde(rename = "success")]
-    Success {
-        message: String,
-    },
+    Success { message: String },
 
     /// エラーメッセージ
     #[serde(rename = "error")]
-    Error {
-        message: String,
-    },
+    Error { message: String },
 
     /// マッチが見つかった通知
     #[serde(rename = "match_found")]
-    MatchFound {
-        opponent: String,
-    },
+    MatchFound { opponent: String },
 
     /// ゲーム状態の更新
     #[serde(rename = "game_state")]
@@ -67,3 +64,35 @@ pub enum ServerMessage {
     },
 }
 
+/// WebSocketセッションの接続メッセージ
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Connect {
+    pub session_id: String,
+    pub username: String,
+    pub addr: Addr<WsGameSession>,
+}
+
+/// WebSocketセッションの切断メッセージ
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Disconnect {
+    pub session_id: String,
+}
+
+/// クライアントへのメッセージ送信リクエスト
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct SendMessage {
+    pub message: String,
+}
+
+/// ゲームサーバーからのセッションへのメッセージ
+impl Handler<SendMessage> for WsGameSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: SendMessage, ctx: &mut Self::Context) {
+        // テキストメッセージをWebSocketに送信
+        ctx.text(msg.message);
+    }
+}
