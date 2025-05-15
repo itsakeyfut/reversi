@@ -1,13 +1,13 @@
 //! # カスタムロガー
-//! 
+//!
 //! ヘッダーにステータスを付与してログを出力
-//! 
+//!
 //! ## 関数
-//! 
+//!
 //! - `log`: ログ出力
-//! 
+//!
 //! ## マクロ
-//! 
+//!
 //! - `app_log`:     以下ログを出力するための土台　※直接的には使用しない
 //! - `success_log`: 成功ログ
 //! - `info_log`:    情報ログ
@@ -16,12 +16,12 @@
 //! - `debug_log`:   デバッグログ
 
 use chrono::Local;
+use lazy_static::lazy_static;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use std::sync::mpsc::{self, Sender};
 use std::thread;
-use lazy_static::lazy_static;
 
 lazy_static! {
     pub static ref LOG_PATH: String = format!("/server/log/actix.log");
@@ -54,7 +54,7 @@ impl Header {
 }
 
 pub struct Logger {
-    sender: Sender<(Header, String)>
+    sender: Sender<(Header, String)>,
 }
 
 impl Logger {
@@ -68,7 +68,7 @@ impl Logger {
                     eprintln!("Failed to write log: {}", e);
                 }
             }
-        }); 
+        });
 
         Self { sender }
     }
@@ -98,9 +98,9 @@ impl Logger {
         );
 
         let mut log_file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&*LOG_PATH)?;
+            .create(true)
+            .append(true)
+            .open(&*LOG_PATH)?;
 
         writeln!(log_file, "{}", log_message)?;
         Ok(())
