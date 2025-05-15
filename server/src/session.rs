@@ -44,10 +44,10 @@ pub enum UserStatus {
 }
 
 impl WsGameSession {
-    pub fn new() -> Self {
+    pub fn new(server_addr: Option<actix::Addr<GameServer>>) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
-            server_addr: None,
+            server_addr,
             last_heartbeat: Instant::now(),
             username: None,
             status: UserStatus::Connecting,
@@ -119,11 +119,6 @@ impl Actor for WsGameSession {
         self.heartbeat(ctx);
 
         info_log!("Start new ws session: {}", self.id);
-
-        // GameServerアクターのアドレスを取得
-        let server_addr = ctx.address();
-        self.server_addr = Some(server_addr);
-
         // ハンドシェイク完了メッセージをクライアントに送信
         self.send_success(ctx, "Connected Successfully. Authentication is required.");
     }

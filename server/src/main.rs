@@ -1,10 +1,9 @@
+use actix::prelude::*;
 use actix_cors::Cors;
-use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
-use actix_web_actors::ws;
-use std::time::{Duration, Instant};
+use actix_web::{web, App, HttpResponse, HttpServer};
 
-use server::{app_log, info_log};
-use server::{server::GameServer, session::WsGameSession};
+use server::helpers::logger;
+use server::server::GameServer;
 use server::presentation::routes::ws_route::ws_index;
 
 #[actix_web::main]
@@ -13,7 +12,7 @@ async fn main() -> std::io::Result<()> {
 
     let game_server = GameServer::new().start();
 
-    info_log!("Initializing reversi...");
+    logger::LOGGER.log(logger::Header::INFO, "Initializing reversi...");
 
     HttpServer::new(move || {
         App::new()
