@@ -47,3 +47,12 @@ impl GameServer {
         }
     }
 }
+
+/// GameServerアクターの実装
+impl Actor for GameServer {
+    type Context = Context<Self>;
+
+    fn started(&mut self, _: &mut Self::Context) {
+        info_log!("GameServer Actor started");
+    }
+}
