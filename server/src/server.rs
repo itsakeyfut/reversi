@@ -1,8 +1,8 @@
 use actix::prelude::*;
 use std::collections::HashMap;
 
-use crate::{app_log, info_log, warning_log};
 use crate::message::{Connect, Disconnect, SendMessage, ServerMessage};
+use crate::{app_log, info_log};
 
 /// ゲームサーバーアクター - 全セッションとゲーム状態を管理
 pub struct GameServer {
@@ -41,9 +41,7 @@ impl GameServer {
     fn send_message_to_session(&self, session_id: &str, message: &ServerMessage) {
         if let Some((_, addr)) = self.sessions.get(session_id) {
             let msg = serde_json::to_string(message).unwrap();
-            addr.do_send(SendMessage {
-                message: msg,
-            });
+            addr.do_send(SendMessage { message: msg });
         }
     }
 }
@@ -67,23 +65,21 @@ impl Handler<Connect> for GameServer {
             if let Some((_, addr)) = self.sessions.get(old_session_id) {
                 // 古いセッションに切断メッセージを送信
                 let disconnect_msg = ServerMessage::Error {
-                    message: "Your account has been logged in from another device or location. If this wasn't you, please secure your account immediately.".to_string(),
+                    message: "Your account has been logged in from another device or location.
+                            If this wasn't you, please secure your account immediately.".to_string(),
                 };
                 let msg_str = serde_json::to_string(&disconnect_msg).unwrap();
-                addr.do_send(SendMessage {
-                    message: msg_str,
-                });
+                addr.do_send(SendMessage { message: msg_str });
             }
             // 古いセッションをマップから削除
             self.sessions.remove(old_session_id);
         }
 
         // 新しいセッションを登録
-        self.sessions.insert(
-            msg.session_id.clone(),
-            (msg.username.clone(), msg.addr),
-        );
-        self.users.insert(msg.username.clone(), msg.session_id.clone());
+        self.sessions
+            .insert(msg.session_id.clone(), (msg.username.clone(), msg.addr));
+        self.users
+            .insert(msg.username.clone(), msg.session_id.clone());
 
         info_log!(
             "New user connected: {} (Session ID: {}), total connections: {}",
