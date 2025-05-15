@@ -86,7 +86,7 @@ impl Handler<Connect> for GameServer {
         self.users.insert(msg.username.clone(), msg.session_id.clone());
 
         info_log!(
-            "New youser connected: {} (Session ID: {}), total connections: {}",
+            "New user connected: {} (Session ID: {}), total connections: {}",
             msg.username,
             msg.session_id,
             self.sessions.len()
