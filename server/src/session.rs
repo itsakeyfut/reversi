@@ -189,8 +189,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsGameSession {
                                         message: client_msg,
                                     });
                                 } else {
-                                    warning_log!("Cannot forward message: GameServer reference not available");
-                                    self.send_error(ctx, "Server connection not established. Try reconnecting.");
+                                    warning_log!(
+                                        "Cannot forward message: GameServer reference not available"
+                                    );
+                                    self.send_error(
+                                        ctx,
+                                        "Server connection not established. Try reconnecting.",
+                                    );
                                 }
                             }
                         }

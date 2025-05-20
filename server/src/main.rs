@@ -1,10 +1,10 @@
 use actix::prelude::*;
 use actix_cors::Cors;
-use actix_web::{web, App, HttpResponse, HttpServer};
+use actix_web::{App, HttpResponse, HttpServer, web};
 
 use server::helpers::logger;
-use server::server::GameServer;
 use server::presentation::routes::ws_route::ws_index;
+use server::server::GameServer;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -24,7 +24,10 @@ async fn main() -> std::io::Result<()> {
                     .allowed_headers(vec!["content-type"])
                     .max_age(3600),
             )
-            .route("/health", web::get().to(|| async { HttpResponse::Ok().body("Healthy!") }))
+            .route(
+                "/health",
+                web::get().to(|| async { HttpResponse::Ok().body("Healthy!") }),
+            )
             .route("/ws", web::get().to(ws_index))
     })
     .bind("127.0.0.1:8080")?

@@ -3,11 +3,10 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::game::{Game, GameState};
-use crate::message::{Connect, Disconnect, SendMessage, ServerMessage, ClientMessage};
-use crate::session::UserStatus;
 use crate::matchmaking::MatchmakingService;
-use crate::{app_log, info_log, warning_log, debug_log};
-
+use crate::message::{ClientMessage, Connect, Disconnect, SendMessage, ServerMessage};
+use crate::session::UserStatus;
+use crate::{app_log, debug_log, info_log, warning_log};
 
 // マッチングのタイムアウト（秒）
 const MATCH_TIMEOUT: Duration = Duration::from_secs(30);
@@ -70,7 +69,8 @@ impl GameServer {
 
     /// ユーザーステータスを更新
     fn update_user_status(&mut self, user_id: &str, status: UserStatus) {
-        self.user_statuses.insert(user_id.to_string(), status.clone());
+        self.user_statuses
+            .insert(user_id.to_string(), status.clone());
         debug_log!("Updated user status: {} -> {:?}", user_id, status);
     }
 
@@ -121,7 +121,11 @@ impl GameServer {
         let created_matches = self.matchmaking.find_matches();
 
         for created_match in created_matches {
-            info_log!("Match found: {} vs. {}", created_match.player1_name, created_match.player2_name);
+            info_log!(
+                "Match found: {} vs. {}",
+                created_match.player1_name,
+                created_match.player2_name
+            );
 
             // 新しいゲームを作成
             let game_id = created_match.match_id.clone();
@@ -132,16 +136,18 @@ impl GameServer {
                 created_match.player2_id.clone(),
                 created_match.player2_name.clone(),
             );
-            
+
             // ゲームの初期状態を取得
             let game_state = game.get_state();
-            
+
             // ゲームをアクティブゲームマップに登録
             self.active_games.insert(game_id.clone(), game);
-            
+
             // プレイヤーをゲームに関連付け
-            self.user_games.insert(created_match.player1_id.clone(), game_id.clone());
-            self.user_games.insert(created_match.player2_id.clone(), game_id.clone());
+            self.user_games
+                .insert(created_match.player1_id.clone(), game_id.clone());
+            self.user_games
+                .insert(created_match.player2_id.clone(), game_id.clone());
 
             // プレイヤー1にマッチが見つかったことを通知
             let msg1 = ServerMessage::MatchFound {
@@ -149,7 +155,7 @@ impl GameServer {
             };
             self.send_message_to_session(&created_match.player1_id, &msg1);
             self.update_user_status(&created_match.player1_id, UserStatus::InGame);
-            
+
             // プレイヤー1に初期ゲーム状態を送信
             let black_state = ServerMessage::GameState {
                 board: game_state.board.clone(),
@@ -164,7 +170,7 @@ impl GameServer {
             };
             self.send_message_to_session(&created_match.player2_id, &msg2);
             self.update_user_status(&created_match.player2_id, UserStatus::InGame);
-            
+
             // プレイヤー2に初期ゲーム状態を送信
             let white_state = ServerMessage::GameState {
                 board: game_state.board.clone(),
@@ -179,9 +185,11 @@ impl GameServer {
 
         // タイムアウトしたマッチを処理
         for expired_match in expired_matches {
-            warning_log!("Match timed out: {} vs. {}",
+            warning_log!(
+                "Match timed out: {} vs. {}",
                 expired_match.player1_name,
-                expired_match.player2_name);
+                expired_match.player2_name
+            );
 
             // プレイヤー1に通知
             let msg1 = ServerMessage::Error {
@@ -206,30 +214,30 @@ impl GameServer {
             Some(id) => id.clone(),
             None => return Err("You are not in a game".to_string()),
         };
-        
+
         // ゲームが存在するか確認
         let game = match self.active_games.get_mut(&game_id) {
             Some(game) => game,
             None => return Err("Game not found".to_string()),
         };
-        
+
         // 手を打つ
         match game.make_move(session_id, x, y) {
             Ok(game_state) => {
                 // 両プレイヤーにゲーム状態を送信
                 self.send_game_state_to_players(&game_id, &game_state);
-                
+
                 // ゲームが終了したか確認
                 if game_state.is_game_over {
                     self.handle_game_over(&game_id, &game_state);
                 }
-                
+
                 Ok(())
-            },
+            }
             Err(e) => Err(e),
         }
     }
-    
+
     /// ゲーム降参を処理する
     fn handle_resign(&mut self, session_id: &str) -> Result<(), String> {
         // プレイヤーがゲームに参加しているか確認
@@ -237,28 +245,28 @@ impl GameServer {
             Some(id) => id.clone(),
             None => return Err("You are not in a game".to_string()),
         };
-        
+
         // ゲームが存在するか確認
         let game = match self.active_games.get_mut(&game_id) {
             Some(game) => game,
             None => return Err("Game not found".to_string()),
         };
-        
+
         // 降参処理
         match game.resign(session_id) {
             Ok(game_state) => {
                 // 両プレイヤーにゲーム状態を送信
                 self.send_game_state_to_players(&game_id, &game_state);
-                
+
                 // ゲーム終了処理
                 self.handle_game_over(&game_id, &game_state);
-                
+
                 Ok(())
-            },
+            }
             Err(e) => Err(e),
         }
     }
-    
+
     /// ゲーム状態を両プレイヤーに送信
     fn send_game_state_to_players(&self, game_id: &str, game_state: &GameState) {
         if let Some(game) = self.active_games.get(game_id) {
@@ -269,7 +277,7 @@ impl GameServer {
                 your_color: "black".to_string(),
             };
             self.send_message_to_session(&game.black_player_id, &black_state);
-            
+
             // 白プレイヤーにゲーム状態を送信
             let white_state = ServerMessage::GameState {
                 board: game_state.board.clone(),
@@ -279,11 +287,11 @@ impl GameServer {
             self.send_message_to_session(&game.white_player_id, &white_state);
         }
     }
-    
+
     /// ゲーム終了処理
     fn handle_game_over(&mut self, game_id: &str, game_state: &GameState) {
         // 必要な情報を先に取り出す
-        let (black_player_id, white_player_id, _, _, winner_name) = 
+        let (black_player_id, white_player_id, _, _, winner_name) =
             if let Some(game) = self.active_games.get(game_id) {
                 // 勝者を特定
                 let winner_name = match &game_state.winner {
@@ -293,41 +301,41 @@ impl GameServer {
                         } else {
                             Some(game.white_player_name.clone())
                         }
-                    },
+                    }
                     None => None, // 引き分け
                 };
-                
+
                 (
                     game.black_player_id.clone(),
                     game.white_player_id.clone(),
-                    game.black_player_name.clone(), 
+                    game.black_player_name.clone(),
                     game.white_player_name.clone(),
-                    winner_name
+                    winner_name,
                 )
             } else {
                 // ゲームが見つからない場合は何もしない
                 return;
             };
-        
+
         info_log!("Game over: {}", game_id);
-        
+
         // 両プレイヤーにゲーム終了を通知
         let game_over = ServerMessage::GameOver {
             winner: winner_name,
             reason: "Game completed".to_string(),
         };
-        
+
         self.send_message_to_session(&black_player_id, &game_over);
         self.send_message_to_session(&white_player_id, &game_over);
-        
+
         // プレイヤーのステータスを更新
         self.update_user_status(&black_player_id, UserStatus::Idle);
         self.update_user_status(&white_player_id, UserStatus::Idle);
-        
+
         // ゲームの関連付けを解除
         self.user_games.remove(&black_player_id);
         self.user_games.remove(&white_player_id);
-        
+
         // ゲームをアクティブリストから削除
         self.active_games.remove(game_id);
     }
@@ -346,7 +354,7 @@ impl Actor for GameServer {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         info_log!("GameServer Actor started");
-        
+
         // 定期的にマッチメイキングを実行
         ctx.run_interval(MATCHMAKING_INTERVAL, |_, ctx| {
             ctx.address().do_send(RunMatchmaking);
@@ -383,7 +391,7 @@ impl Handler<ClientMessageWrapper> for GameServer {
                     };
                     self.send_message_to_session(&msg.session_id, &error_msg);
                 }
-            },
+            }
             ClientMessage::LeaveQueue => {
                 if let Err(e) = self.remove_user_from_matchmaking(&msg.session_id) {
                     let error_msg = ServerMessage::Error {
@@ -391,35 +399,29 @@ impl Handler<ClientMessageWrapper> for GameServer {
                     };
                     self.send_message_to_session(&msg.session_id, &error_msg);
                 }
-            },
+            }
             ClientMessage::MakeMove { x, y } => {
                 match self.handle_game_move(&msg.session_id, x, y) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => {
-                        let error_msg = ServerMessage::Error {
-                            message: e,
-                        };
+                        let error_msg = ServerMessage::Error { message: e };
                         self.send_message_to_session(&msg.session_id, &error_msg);
                     }
                 }
-            },
-            ClientMessage::Resign => {
-                match self.handle_resign(&msg.session_id) {
-                    Ok(_) => {},
-                    Err(e) => {
-                        let error_msg = ServerMessage::Error {
-                            message: e,
-                        };
-                        self.send_message_to_session(&msg.session_id, &error_msg);
-                    }
+            }
+            ClientMessage::Resign => match self.handle_resign(&msg.session_id) {
+                Ok(_) => {}
+                Err(e) => {
+                    let error_msg = ServerMessage::Error { message: e };
+                    self.send_message_to_session(&msg.session_id, &error_msg);
                 }
             },
             ClientMessage::Heartbeat => {
                 // ハートビートは無視
-            },
+            }
             ClientMessage::Authenticate { username: _ } => {
                 // 認証はWsGameSessionで処理済み
-            },
+            }
         }
     }
 }
@@ -435,7 +437,8 @@ impl Handler<Connect> for GameServer {
                 // 古いセッションに切断メッセージを送信
                 let disconnect_msg = ServerMessage::Error {
                     message: "Your account has been logged in from another device or location.
-                            If this wasn't you, please secure your account immediately.".to_string(),
+                            If this wasn't you, please secure your account immediately."
+                        .to_string(),
                 };
                 let msg_str = serde_json::to_string(&disconnect_msg).unwrap();
                 addr.do_send(SendMessage { message: msg_str });
@@ -473,10 +476,10 @@ impl Handler<Disconnect> for GameServer {
         if let Some((username, _)) = self.sessions.remove(&msg.session_id) {
             self.users.remove(&username);
             self.user_statuses.remove(&msg.session_id);
-            
+
             // マッチングキューからも削除
             self.matchmaking.remove_from_queue(&msg.session_id);
-            
+
             // プレイヤーがゲームに参加していた場合は処理
             if let Some(game_id) = self.user_games.get(&msg.session_id).cloned() {
                 if let Some(game) = self.active_games.get(&game_id) {
@@ -486,28 +489,28 @@ impl Handler<Disconnect> for GameServer {
                     } else {
                         game.black_player_id.clone()
                     };
-                    
+
                     let winner_name = if msg.session_id == game.black_player_id {
                         game.white_player_name.clone()
                     } else {
                         game.black_player_name.clone()
                     };
-                    
+
                     // 相手プレイヤーにゲーム終了を通知
                     let game_over = ServerMessage::GameOver {
                         winner: Some(winner_name),
                         reason: "Opponent disconnected".to_string(),
                     };
-                    
+
                     self.send_message_to_session(&opponent_id, &game_over);
-                    
+
                     // 相手プレイヤーのステータスを更新
                     self.update_user_status(&opponent_id, UserStatus::Idle);
-                    
+
                     // ゲームの関連付けを解除
                     self.user_games.remove(&opponent_id);
                     self.user_games.remove(&msg.session_id);
-                    
+
                     // ゲームをアクティブリストから削除
                     self.active_games.remove(&game_id);
                 } else {
@@ -515,7 +518,7 @@ impl Handler<Disconnect> for GameServer {
                     self.user_games.remove(&msg.session_id);
                 }
             }
-            
+
             info_log!(
                 "User disconnected: {} (Session ID: {}), total connections: {}",
                 username,

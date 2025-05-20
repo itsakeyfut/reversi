@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
 use uuid::Uuid;
 
-use crate::{app_log, info_log, warning_log, debug_log};
+use crate::{app_log, debug_log, info_log, warning_log};
 
 /// マッチングキューのエントリー
 #[derive(Debug, Clone)]
@@ -76,7 +76,10 @@ impl MatchmakingService {
         self.queue.insert(user_id.clone(), entry);
         self.queue_order.push_back(user_id);
 
-        info_log!("Player added to matchmaking queue. Players in queue: {}", self.queue.len());
+        info_log!(
+            "Player added to matchmaking queue. Players in queue: {}",
+            self.queue.len()
+        );
         true
     }
 
@@ -84,7 +87,10 @@ impl MatchmakingService {
     pub fn remove_from_queue(&mut self, user_id: &str) -> bool {
         if self.queue.remove(user_id).is_some() {
             self.queue_order.retain(|id| id != user_id);
-            info_log!("Player removed from matchmaking queue. Players in queue: {}", self.queue.len());
+            info_log!(
+                "Player removed from matchmaking queue. Players in queue: {}",
+                self.queue.len()
+            );
             true
         } else {
             false
@@ -119,7 +125,8 @@ impl MatchmakingService {
                     };
 
                     // 保留中のマッチに参加
-                    self.pending_matches.insert(match_id.clone(), new_match.clone());
+                    self.pending_matches
+                        .insert(match_id.clone(), new_match.clone());
                     created_matches.push(new_match);
 
                     info_log!("New match created: {}", match_id);
@@ -169,14 +176,18 @@ impl MatchmakingService {
 
     /// 特定のユーザーの保留中のマッチを見つける
     pub fn find_pending_match_for_user(&self, user_id: &str) -> Option<&PendingMatch> {
-        self.pending_matches.values().find(|m| m.player1_id == user_id || m.player2_id == user_id)
+        self.pending_matches
+            .values()
+            .find(|m| m.player1_id == user_id || m.player2_id == user_id)
     }
 
     /// キューの統計情報を取得
     pub fn get_queue_stats(&self) -> (usize, Duration) {
         let queue_size = self.queue.len();
         let avg_wait_time = if !self.queue.is_empty() {
-            let total_wait_time = self.queue.values()
+            let total_wait_time = self
+                .queue
+                .values()
                 .map(|entry| entry.joined_at.elapsed())
                 .sum::<Duration>();
             total_wait_time / queue_size as u32
@@ -193,7 +204,9 @@ impl MatchmakingService {
         let mut expired_matches = Vec::new();
 
         // タイムアウトしたマッチを特定
-        let expired_ids: Vec<String> = self.pending_matches.iter()
+        let expired_ids: Vec<String> = self
+            .pending_matches
+            .iter()
             .filter(|(_, m)| now.duration_since(m.created_at) > timeout)
             .map(|(id, _)| id.clone())
             .collect();
