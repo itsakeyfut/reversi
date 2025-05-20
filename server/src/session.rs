@@ -44,10 +44,10 @@ pub enum UserStatus {
 }
 
 impl WsGameSession {
-    pub fn new(server_addr: Option<actix::Addr<GameServer>>) -> Self {
+    pub fn new() -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
-            server_addr,
+            server_addr: None,
             last_heartbeat: Instant::now(),
             username: None,
             status: UserStatus::Connecting,
@@ -181,10 +181,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsGameSession {
                                     });
                                 }
                             }
-                            // TODO: 他のメッセージタイプをマッチガードに含める
+                            // 他のメッセージタイプは全てGameServerに転送
                             _ => {
-                                warning_log!("Received an unknown message type: {:?}", client_msg);
-                                self.send_error(ctx, "This message type is not supported.");
+                                if let Some(addr) = &self.server_addr {
+                                    addr.do_send(crate::server::ClientMessageWrapper {
+                                        session_id: self.id.clone(),
+                                        message: client_msg,
+                                    });
+                                } else {
+                                    warning_log!("Cannot forward message: GameServer reference not available");
+                                    self.send_error(ctx, "Server connection not established. Try reconnecting.");
+                                }
                             }
                         }
                     }

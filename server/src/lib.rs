@@ -1,6 +1,7 @@
-pub mod helpers;
-pub mod message;
 pub mod server;
 pub mod session;
-pub mod presentation;
+pub mod message;
 pub mod matchmaking;
+pub mod game;
+pub mod helpers;
+pub mod presentation;
