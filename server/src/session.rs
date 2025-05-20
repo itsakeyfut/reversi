@@ -119,11 +119,6 @@ impl Actor for WsGameSession {
         self.heartbeat(ctx);
 
         info_log!("Start new ws session: {}", self.id);
-
-        // GameServerアクターのアドレスを取得
-        let server_addr = ctx.address();
-        self.server_addr = Some(server_addr);
-
         // ハンドシェイク完了メッセージをクライアントに送信
         self.send_success(ctx, "Connected Successfully. Authentication is required.");
     }
@@ -186,10 +181,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsGameSession {
                                     });
                                 }
                             }
-                            // TODO: 他のメッセージタイプをマッチガードに含める
+                            // 他のメッセージタイプは全てGameServerに転送
                             _ => {
-                                warning_log!("Received an unknown message type: {:?}", client_msg);
-                                self.send_error(ctx, "This message type is not supported.");
+                                if let Some(addr) = &self.server_addr {
+                                    addr.do_send(crate::server::ClientMessageWrapper {
+                                        session_id: self.id.clone(),
+                                        message: client_msg,
+                                    });
+                                } else {
+                                    warning_log!(
+                                        "Cannot forward message: GameServer reference not available"
+                                    );
+                                    self.send_error(
+                                        ctx,
+                                        "Server connection not established. Try reconnecting.",
+                                    );
+                                }
                             }
                         }
                     }
