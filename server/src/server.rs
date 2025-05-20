@@ -66,7 +66,8 @@ impl Handler<Connect> for GameServer {
                 // 古いセッションに切断メッセージを送信
                 let disconnect_msg = ServerMessage::Error {
                     message: "Your account has been logged in from another device or location.
-                            If this wasn't you, please secure your account immediately.".to_string(),
+                            If this wasn't you, please secure your account immediately."
+                        .to_string(),
                 };
                 let msg_str = serde_json::to_string(&disconnect_msg).unwrap();
                 addr.do_send(SendMessage { message: msg_str });

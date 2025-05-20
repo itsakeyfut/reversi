@@ -1,8 +1,8 @@
-use actix_web::{web, Error, HttpRequest, HttpResponse};
+use actix_web::{Error, HttpRequest, HttpResponse, web};
 use actix_web_actors::ws;
 
-use crate::{app_log, info_log};
 use crate::session::WsGameSession;
+use crate::{app_log, info_log};
 
 /// WebSocket接続を処理するエンドポイント
 pub async fn ws_index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
