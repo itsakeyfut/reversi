@@ -1,15 +1,37 @@
 # Multiplayer Reversi
 
-## Diagram
+## Screenshots
 
-### Server Architecture
+### Lobby
 
-![Server Architecture](./diagram/server_arch_diagram.png)
+[Lobby](./screenshots/player1_lobby.png)
 
-### Game Stats
+### Playing
 
-![Game Stats](./diagram/game_stats_diagram.png)
+[player1_in_game](./screenshots/player1_in_game.png)
 
-### Server Components
+[player2_in_game](./screenshots/player2_in_game.png)
 
-![Server Components](./diagram/server_components_diagram.drawio.png)
+[player3_in_game](./screenshots/player3_in_game.png)
+
+[player4_in_game](./screenshots/player4_in_game.png)
+
+### Winner
+
+[player1_win](./screenshots/player1_win.png)
+
+[player4_win](./screenshots/player4_win.png)
+
+## Features
+
+- Sharing messages
+  - ClientMessage and ServerMessage
+  - Connect and Disconnect
+  - SendMessage
+- Finding matches
+  - QueueEntry, which manages player info and ready flag
+  - Supply matchmaking service with queues
+- Managing sessions
+  - Actor Based Session
+  - Manage user status
+  - operate WebSocket Streaming handler
