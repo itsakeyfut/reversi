@@ -93,7 +93,6 @@ export const authenticate = (username: string): void => {
 export const joinQueue = (): void => {
   sendMessage({
     type: "join_queue",
-    payload: {},
   });
 
   useGameStore.getState().startMatchSearch();
@@ -102,7 +101,6 @@ export const joinQueue = (): void => {
 export const leaveQueue = (): void => {
   sendMessage({
     type: "leave_queue",
-    payload: {},
   });
 
   useGameStore.getState().cancelMatchSearch();
@@ -118,7 +116,6 @@ export const makeMove = (x: number, y: number): void => {
 export const resign = (): void => {
   sendMessage({
     type: "resign",
-    payload: {},
   });
 };
 
