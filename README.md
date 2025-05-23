@@ -4,23 +4,23 @@
 
 ### Lobby
 
-[Lobby](./screenshots/player1_lobby.png)
+![Lobby](./screenshots/player1_lobby.png)
 
 ### Playing
 
-[player1_in_game](./screenshots/player1_in_game.png)
+![player1_in_game](./screenshots/player1_in_game.png)
 
-[player2_in_game](./screenshots/player2_in_game.png)
+![player2_in_game](./screenshots/player2_in_game.png)
 
-[player3_in_game](./screenshots/player3_in_game.png)
+![player3_in_game](./screenshots/player3_in_game.png)
 
-[player4_in_game](./screenshots/player4_in_game.png)
+![player4_in_game](./screenshots/player4_in_game.png)
 
 ### Winner
 
-[player1_win](./screenshots/player1_win.png)
+![player1_win](./screenshots/player1_win.png)
 
-[player4_win](./screenshots/player4_win.png)
+![player4_win](./screenshots/player4_win.png)
 
 ## Features
 
